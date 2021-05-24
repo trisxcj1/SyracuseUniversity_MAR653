@@ -1,0 +1,319 @@
+# Packages
+```{r}
+
+library(tidyverse)
+library(aod)
+library(randomForest)
+library(neuralnet)
+```
+
+# Data loading and cleaning
+```{r}
+# Loading the training and testing data
+relay_train <- read.csv(trainData_data_path)
+relay_test <- read.csv(testData_data_path)
+
+# Checking for missing data
+sum(is.na(relay_train))
+sum(is.na(relay_test))
+
+# Converting the `retained` column from an integer to a factor
+relay_train$retained <- as.factor(relay_train$retained)
+relay_test$retained <- as.factor(relay_test$retained)
+
+# Dropping the `custid` column
+relay_train <- relay_train[, -1]
+relay_test <- relay_test[, -1]
+
+# Creating a variable for each `favday`
+relay_train %>% 
+  dplyr::select(favday) %>% 
+  unique()
+
+# -- train set
+relay_train$Monday <- ifelse(relay_train$favday=="Monday", 1, 0)
+relay_train$Tuesday <- ifelse(relay_train$favday=="Tuesday", 1, 0)
+relay_train$Wednesday <- ifelse(relay_train$favday=="Wednesday", 1, 0)
+relay_train$Thursday <- ifelse(relay_train$favday=="Thursday", 1, 0)
+relay_train$Friday <- ifelse(relay_train$favday=="Friday", 1, 0)
+relay_train$Saturday <- ifelse(relay_train$favday=="Saturday", 1, 0)
+relay_train$Sunday <- ifelse(relay_train$favday=="Sunday", 1, 0)
+
+# -- test set
+relay_test$Monday <- ifelse(relay_test$favday=="Monday", 1, 0)
+relay_test$Tuesday <- ifelse(relay_test$favday=="Tuesday", 1, 0)
+relay_test$Wednesday <- ifelse(relay_test$favday=="Wednesday", 1, 0)
+relay_test$Thursday <- ifelse(relay_test$favday=="Thursday", 1, 0)
+relay_test$Friday <- ifelse(relay_test$favday=="Friday", 1, 0)
+relay_test$Saturday <- ifelse(relay_test$favday=="Saturday", 1, 0)
+relay_test$Sunday <- ifelse(relay_test$favday=="Sunday", 1, 0)
+
+# Creating a dummy variable `weekend`
+# -- weekend = 1 if favday = Friday or Saturday or Sunday, and 0 otherwise
+weekend_days <- c("Friday", "Saturday", "Sunday")
+relay_train$Weekend = ifelse(relay_train$favday %in% weekend_days, 1, 0)
+relay_test$Weekend = ifelse(relay_test$favday %in% weekend_days, 1, 0)
+
+
+# Creating a variable for each `city`
+relay_train %>% 
+  dplyr::select(city) %>% 
+  unique()
+
+relay_test %>% 
+  dplyr::select(city) %>% 
+  unique()
+
+# -- train set
+relay_train$city_CHO <- ifelse(relay_train$city=="CHO", 1, 0)
+relay_train$city_RIC <- ifelse(relay_train$city=="CHO", 1, 0)
+relay_train$city_DCX <- ifelse(relay_train$city=="CHO", 1, 0)
+relay_train$city_BWI <- ifelse(relay_train$city=="CHO", 1, 0)
+
+# -- test set
+relay_test$city_CHO <- ifelse(relay_test$city=="CHO", 1, 0)
+relay_test$city_RIC <- ifelse(relay_test$city=="CHO", 1, 0)
+relay_test$city_DCX <- ifelse(relay_test$city=="CHO", 1, 0)
+relay_test$city_BWI <- ifelse(relay_test$city=="CHO", 1, 0)
+
+# # Converting the various date columns into dates
+# # -- there are dates where the value is #N/A for some odd reason
+# relay_train <- relay_train %>% 
+#   filter(!str_detect(created, "#N")) %>% 
+#   filter(!str_detect(firstorder, "#N")) %>% 
+#   filter(!str_detect(lastorder, "#N"))
+# relay_train$created <- parse_date(relay_train$created, format="%m/%d/%Y")
+# relay_train$firstorder <- parse_date(relay_train$firstorder, format="%m/%d/%Y")
+# relay_train$lastorder <- parse_date(relay_train$lastorder, format="%m/%d/%Y")
+# 
+# relay_test <- relay_test %>% 
+#   filter(!str_detect(created, "#N")) %>% 
+#   filter(!str_detect(firstorder, "#N")) %>% 
+#   filter(!str_detect(lastorder, "#N"))
+# relay_test$created <- parse_date(relay_test$created, format="%m/%d/%Y")
+# relay_test$firstorder <- parse_date(relay_test$firstorder, format="%m/%d/%Y")
+# relay_test$lastorder <- parse_date(relay_test$lastorder, format="%m/%d/%Y")
+
+```
+
+# Modeling
+## Model 1
+```{r}
+# Creating logtic regression with:
+# -- esent, eclickrate, avgorder, ordfreq, paperless, refill
+model_1 <- glm(retained ~ esent + eclickrate + avgorder + ordfreq + paperless + refill + doorstep, data=relay_train, family="binomial")
+summary(model_1)
+
+# -- Looking at model accuracy
+relay_test$predicted_retained_model_1 <- ifelse(
+  predict.glm(model_1, relay_test, type="response") > 0.5,
+  1,
+  0
+)
+
+model_1_hit_rate <- sum(relay_test$retained == relay_test$predicted_retained_model_1) / nrow(relay_test)
+model_1_hit_rate
+
+model_1_confusion_matrix <- table(actual=relay_test$retained, predicted=relay_test$predicted_retained_model_1)
+model_1_confusion_matrix
+
+```
+
+## Model 2
+```{r}
+# Creating logtic regression with:
+# -- avgorder, ordfreq, paperless, refill, doorstep
+model_2 <- glm(retained ~ avgorder + ordfreq + paperless + refill + doorstep, data=relay_train, family="binomial")
+summary(model_2)
+
+# -- Looking at model accuracy
+relay_test$predicted_retained_model_2 <- ifelse(
+  predict.glm(model_2, relay_test, type="response") > 0.5,
+  1,
+  0
+)
+
+model_2_hit_rate <- sum(relay_test$retained == relay_test$predicted_retained_model_2) / nrow(relay_test)
+model_2_hit_rate
+
+model_2_confusion_matrix <- table(actual=relay_test$retained, predicted=relay_test$predicted_retained_model_2)
+model_2_confusion_matrix
+
+```
+
+## Model 3
+```{r}
+# Creating logtic regression with:
+# -- esent
+model_3 <- glm(retained ~ esent, data=relay_train, family="binomial")
+summary(model_3)
+
+# -- Looking at model accuracy
+relay_test$predicted_retained_model_3 <- ifelse(
+  predict.glm(model_3, relay_test, type="response") > 0.5,
+  1,
+  0
+)
+
+model_3_hit_rate <- sum(relay_test$retained == relay_test$predicted_retained_model_3) / nrow(relay_test)
+model_3_hit_rate
+
+model_3_confusion_matrix <- table(actual=relay_test$retained, predicted=relay_test$predicted_retained_model_3)
+model_3_confusion_matrix
+
+```
+
+## Model 4
+```{r}
+# Creating logtic regression with:
+# -- esent, eclickrate, avgorder, ordfreq, paperless, refill, doorstep, weekend
+model_4 <- glm(retained ~ esent + eclickrate + avgorder + ordfreq + paperless + refill + doorstep + Weekend, data=relay_train, family="binomial")
+summary(model_4)
+
+# -- Looking at model accuracy
+relay_test$predicted_retained_model_4 <- ifelse(
+  predict.glm(model_4, relay_test, type="response") > 0.5,
+  1,
+  0
+)
+
+model_4_hit_rate <- sum(relay_test$retained == relay_test$predicted_retained_model_4) / nrow(relay_test)
+model_4_hit_rate
+
+model_4_confusion_matrix <- table(actual=relay_test$retained, predicted=relay_test$predicted_retained_model_4)
+model_4_confusion_matrix
+
+```
+
+## Augmenting the df
+```{r}
+# Creating new variables within new train and test dataframes
+relay_train_augmented <- relay_train %>% 
+  mutate(
+    standardized_funnel_activity = scale(esent * eopenrate * eclickrate),
+    standardized_order_activity = scale(avgorder * ordfreq)
+  ) %>% 
+  dplyr::select(
+    retained, standardized_funnel_activity, standardized_order_activity, paperless,
+    refill, doorstep, Monday, Tuesday,
+    Wednesday, Thursday, Friday, Saturday,
+    Sunday, city_CHO, city_RIC, city_DCX,
+    city_BWI, Weekend
+  )
+
+relay_test_augmented <- relay_test %>% 
+  mutate(
+    standardized_funnel_activity = scale(esent * eopenrate * eclickrate),
+    standardized_order_activity = scale(avgorder * ordfreq)
+  ) %>% 
+  dplyr::select(
+    retained, standardized_funnel_activity, standardized_order_activity, paperless,
+    refill, doorstep, Monday, Tuesday,
+    Wednesday, Thursday, Friday, Saturday,
+    Sunday, city_CHO, city_RIC, city_DCX,
+    city_BWI, Weekend
+  )
+
+# # Correlation matrix
+correlation_matrix_augmented_df <- cor(relay_train_augmented[, c(as.numeric(relay_train_augmented$retained), 2:18)])
+
+```
+
+## Model 5 -- augmented
+```{r}
+# Creating logistic regression with:
+# -- standardized_funnel_activity + standardized_order_activity
+model_5 <- glm(retained ~ standardized_funnel_activity + standardized_order_activity, data=relay_train_augmented, family="binomial")
+summary(model_5)
+
+# -- Looking at model accuracy
+relay_test_augmented$predicted_retained_model_5 <- ifelse(
+  predict.glm(model_5, relay_test_augmented, type="response") > 0.5,
+  1,
+  0
+)
+
+model_5_hit_rate <- sum(relay_test_augmented$retained == relay_test_augmented$predicted_retained_model_5) / nrow(relay_test_augmented)
+model_5_hit_rate
+
+model_5_confusion_matrix <- table(actual=relay_test_augmented$retained, predicted=relay_test_augmented$predicted_retained_model_5)
+model_5_confusion_matrix
+
+
+```
+
+## Model 6 -- augmented
+```{r}
+# Creating logistic regression with:
+# -- standardized_funnel_activity + paperless + doorstep + refill
+model_6 <- glm(retained ~ standardized_funnel_activity + paperless + doorstep + refill, data=relay_train_augmented, family="binomial")
+summary(model_6)
+
+# -- Looking at model accuracy
+relay_test_augmented$predicted_retained_model_6 <- ifelse(
+  predict.glm(model_6, relay_test_augmented, type="response") > 0.5,
+  1,
+  0
+)
+
+model_6_hit_rate <- sum(relay_test_augmented$retained == relay_test_augmented$predicted_retained_model_6) / nrow(relay_test_augmented)
+model_6_hit_rate
+
+model_6_confusion_matrix <- table(actual=relay_test_augmented$retained, predicted=relay_test_augmented$predicted_retained_model_6)
+model_6_confusion_matrix
+
+```
+
+## Model 7 (Random Forest)
+```{r}
+# Creating random forest with:
+# -- esent
+model_7 <- randomForest(retained ~ esent, data=relay_train, family="binomial")
+summary(model_7)
+
+# -- Looking at model accuracy
+relay_test$predicted_retained_model_7 <- predict(model_7, relay_test)
+  
+model_7_hit_rate <- sum(relay_test$retained == relay_test$predicted_retained_model_7) / nrow(relay_test)
+model_7_hit_rate
+
+model_7_confusion_matrix <- table(actual=relay_test$retained, predicted=relay_test$predicted_retained_model_7)
+model_7_confusion_matrix
+
+```
+
+## Model 8 (Neural Net)
+```{r}
+# Creating a neural network
+model_8 <- neuralnet(as.numeric(retained) ~ eclickrate + avgorder + ordfreq, data=relay_train, hidden=2, lifesign="minimal", linear.output=FALSE, threshold=0.01)
+plot(model_8)
+summary(model_8)
+
+# -- looking at model accuracy
+relay_test$predicted_retained_model_8 <- ifelse(predict(model_8, relay_test, type=c("class")) > 0.5, 1, 0)
+
+model_8_hit_rate <- sum(relay_test$retained == relay_test$predicted_retained_model_8) / nrow(relay_test)
+model_8_hit_rate
+
+model_8_confusion_matrix <- table(actual=relay_test$retained, predicted=relay_test$predicted_retained_model_8)
+model_8_confusion_matrix
+
+```
+
+## Model 9 (Neural Net)
+```{r}
+# Creating a neural network
+model_9 <- neuralnet(as.numeric(retained) ~ esent + eclickrate + avgorder + ordfreq, data=relay_train, hidden=2, lifesign="minimal", linear.output=FALSE, threshold=0.01)
+plot(model_9)
+summary(model_9)
+
+# -- looking at model accuracy
+relay_test$predicted_retained_model_9 <- ifelse(predict(model_9, relay_test, type=c("class")) > 0.5, 1, 0)
+
+model_9_hit_rate <- sum(relay_test$retained == relay_test$predicted_retained_model_9) / nrow(relay_test)
+model_9_hit_rate
+
+model_9_confusion_matrix <- table(actual=relay_test$retained, predicted=relay_test$predicted_retained_model_9)
+model_9_confusion_matrix
+
+```
