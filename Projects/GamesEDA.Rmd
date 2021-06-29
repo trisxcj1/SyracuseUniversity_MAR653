@@ -1,0 +1,276 @@
+# Packages
+```{r}
+library(tidyverse)
+library(ggthemes)
+```
+
+# Data loading
+```{r}
+# Loading the data
+games_df <- read.csv(data_path)
+
+# Converting `Year` to a integer
+games_df$Year <- as.integer(games_df$Year)
+
+```
+
+# EDA
+## Sales
+```{r}
+# ------ Diving into specific Years
+# ----- Global
+# --- Investigating top years
+games_df %>% 
+  group_by(Year) %>% 
+  summarise(
+    Total_Global_Sales = sum(Global_Sales)
+  ) %>% 
+  select(Year, Total_Global_Sales) %>% 
+  arrange(desc(Total_Global_Sales))
+
+games_df %>% 
+  filter(Year == 2008) %>% 
+  ggplot() +
+  geom_col(aes(y=reorder(Genre, Global_Sales), x=Global_Sales)) +
+  ylab("Genre") +
+  xlab("Sales") +
+  ggtitle("Top Global Genres in 2008") +
+  theme_clean()
+
+games_df %>% 
+  filter(Year == 2008) %>% 
+  select(Publisher, Global_Sales) %>% 
+  arrange(desc(Global_Sales)) %>% 
+  head(30) %>% 
+  ggplot() +
+  geom_col(aes(y=reorder(Publisher, Global_Sales), x=Global_Sales)) +
+  ylab("Publisher") +
+  xlab("Sales") +
+  ggtitle("Top Global Publishers in 2008") +
+  theme_clean()
+
+games_df %>% 
+  filter(Year == 2008) %>% 
+  ggplot() +
+  geom_col(aes(y=reorder(Platform, Global_Sales), x=Global_Sales)) +
+  ylab("Platform") +
+  xlab("Sales") +
+  ggtitle("Top Global Platforms in 2008") +
+  theme_clean()
+
+
+# ----- NA
+# --- Investigating top years
+games_df %>% 
+  group_by(Year) %>% 
+  summarise(
+    Total_NA_Sales = sum(NA_Sales)
+  ) %>% 
+  select(Year, Total_NA_Sales) %>% 
+  arrange(desc(Total_NA_Sales))
+
+games_df %>% 
+  filter(Year == 2008) %>% 
+  ggplot() +
+  geom_col(aes(y=reorder(Genre, NA_Sales), x=NA_Sales)) +
+  ylab("Genre") +
+  xlab("Sales") +
+  ggtitle("Top Genres in North America, 2008") +
+  theme_clean()
+
+games_df %>% 
+  filter(Year == 2008) %>%
+  select(Publisher, NA_Sales) %>% 
+  arrange(desc(NA_Sales)) %>% 
+  head(30)
+  ggplot() +
+  geom_col(aes(y=reorder(Publisher, NA_Sales), x=NA_Sales)) +
+  ylab("Publisher") +
+  xlab("Sales") +
+  ggtitle("Top Publishers in North America, 2008") +
+  theme_clean()
+
+games_df %>% 
+  filter(Year == 2008) %>% 
+  ggplot() +
+  geom_col(aes(y=reorder(Platform, NA_Sales), x=NA_Sales)) +
+  ylab("Platform") +
+  xlab("Sales") +
+  ggtitle("Top Platforms in North America, 2008") +
+  theme_clean()
+
+
+# ----- EU
+# --- Investigating top years
+games_df %>% 
+  group_by(Year) %>% 
+  summarise(
+    Total_EU_Sales = sum(EU_Sales)
+  ) %>% 
+  select(Year, Total_EU_Sales) %>% 
+  arrange(desc(Total_EU_Sales))
+
+games_df %>% 
+  filter(Year == 2009) %>% 
+  ggplot() +
+  geom_col(aes(y=reorder(Genre, EU_Sales), x=EU_Sales)) +
+  ylab("Genre") +
+  xlab("Sales") +
+  ggtitle("Top Genres in Europe, 2009") +
+  theme_clean()
+
+games_df %>% 
+  filter(Year == 2009) %>% 
+  select(Publisher, EU_Sales) %>% 
+  arrange(desc(EU_Sales)) %>% 
+  head(30) %>% 
+  ggplot() +
+  geom_col(aes(y=reorder(Publisher, EU_Sales), x=EU_Sales)) +
+  ylab("Publisher") +
+  xlab("Sales") +
+  ggtitle("Top Publishers in Europe, 2009") +
+  theme_clean()
+
+games_df %>% 
+  filter(Year == 2009) %>% 
+  ggplot() +
+  geom_col(aes(y=reorder(Platform, EU_Sales), x=EU_Sales)) +
+  ylab("Platform") +
+  xlab("Sales") +
+  ggtitle("Top Platforms in Europe, 2009") +
+  theme_clean()
+
+
+# ----- JP
+# --- Investigating other top years
+games_df %>% 
+  group_by(Year) %>% 
+  summarise(
+    Total_JP_Sales = sum(JP_Sales)
+  ) %>% 
+  select(Year, Total_JP_Sales) %>% 
+  arrange(desc(Total_JP_Sales))
+
+games_df %>% 
+  filter(Year == 2006) %>% 
+  ggplot() +
+  geom_col(aes(y=reorder(Genre, JP_Sales), x=JP_Sales)) +
+  ylab("Genre") +
+  xlab("Sales") +
+  ggtitle("Top Genres in Japan, 2006") +
+  theme_clean()
+
+games_df %>% 
+  filter(Year == 2006) %>% 
+  select(Publisher, JP_Sales) %>% 
+  arrange(desc(JP_Sales)) %>% 
+  head(30) %>%
+  ggplot() +
+  geom_col(aes(y=reorder(Publisher, JP_Sales), x=JP_Sales)) +
+  ylab("Publisher") +
+  xlab("Sales") +
+  ggtitle("Top Publishers in Japan, 2006") +
+  theme_clean()
+
+games_df %>% 
+  filter(Year == 2006) %>%
+  ggplot() +
+  geom_col(aes(y=reorder(Platform, JP_Sales), x=JP_Sales)) +
+  ylab("Platform") +
+  xlab("Sales") +
+  ggtitle("Top Platforms in Japan, 2006") +
+  theme_clean()
+
+
+# ----- Other
+# --- Investigating other top years
+games_df %>% 
+  group_by(Year) %>% 
+  summarise(
+    Total_Other_Sales = sum(Other_Sales)
+  ) %>% 
+  select(Year, Total_Other_Sales) %>% 
+  arrange(desc(Total_Other_Sales))
+
+games_df %>% 
+  filter(Year == 2008) %>% 
+  ggplot() +
+  geom_col(aes(y=reorder(Genre, Other_Sales), x=Other_Sales)) +
+  ylab("Genre") +
+  xlab("Sales") +
+  ggtitle("Top Genres in Other Regions, 2008") +
+  theme_clean()
+
+games_df %>% 
+  filter(Year == 2006) %>% 
+  select(Publisher, JP_Sales) %>% 
+  arrange(desc(JP_Sales)) %>% 
+  head(30) %>%
+  ggplot() +
+  geom_col(aes(y=reorder(Publisher, JP_Sales), x=JP_Sales)) +
+  ylab("Publisher") +
+  xlab("Sales") +
+  ggtitle("Top Publishers in Japan, 2006") +
+  theme_clean()
+
+games_df %>% 
+  filter(Year == 2008) %>%
+  ggplot() +
+  geom_col(aes(y=reorder(Platform, Other_Sales), x=Other_Sales)) +
+  ylab("Platform") +
+  xlab("Sales") +
+  ggtitle("Top Platforms in Other Regions, 2008") +
+  theme_clean()
+
+
+
+# ----- Investigating the market share over time
+# Creating the new df with market share over time
+market_share_over_time <- games_df %>% 
+  group_by(Year) %>% 
+  summarise(
+    Total_NA_Sales = sum(NA_Sales),
+    Total_EU_Sales = sum(EU_Sales),
+    Total_JP_Sales = sum(JP_Sales),
+    Total_Global_Sales = sum(Global_Sales)
+  ) %>% 
+  mutate(
+    NA_Marketshare = round(Total_NA_Sales * 100 / Total_Global_Sales, 3),
+    EU_Marketshare = round(Total_EU_Sales * 100 / Total_Global_Sales, 3),
+    JP_Marketshare = round(Total_JP_Sales * 100 / Total_Global_Sales, 3)
+  ) %>% 
+  select(Year, NA_Marketshare, EU_Marketshare, JP_Marketshare, Total_NA_Sales, Total_EU_Sales, Total_JP_Sales, Total_Global_Sales)
+market_share_over_time$Marketshare_Represented <- rowSums(market_share_over_time[, 2:4])
+
+# Plotting market share over time
+marketshare_graphing_cols <- c(
+  "North American Market" = "royalblue",
+  "European Market" = "darkgreen",
+  "Japanese Market" = "darkred",
+  "Global Market" = "orange"
+)
+# --- market share plot
+ggplot(data=market_share_over_time) +
+  geom_line(mapping=aes(x=Year, y=NA_Marketshare, col="North American Market")) +
+  geom_line(mapping=aes(x=Year, y=EU_Marketshare, col="European Market")) +
+  geom_line(mapping=aes(x=Year, y=JP_Marketshare, col="Japanese Market")) +
+  xlab("Year") +
+  ylab("Percentage Market Share") +
+  ggtitle("Percentage Market Share Over Time") +
+  scale_color_manual(name="Markets", values=marketshare_graphing_cols) +
+  theme_clean()
+
+# --- sales plot
+ggplot(data=market_share_over_time) +
+  geom_line(mapping=aes(x=Year, y=Total_NA_Sales, col="North American Market")) +
+  geom_line(mapping=aes(x=Year, y=Total_EU_Sales, col="European Market")) +
+  geom_line(mapping=aes(x=Year, y=Total_JP_Sales, col="Japanese Market")) +
+  geom_line(mapping=aes(x=Year, y=Total_Global_Sales, col="Global Market")) +
+  xlab("Year") +
+  ylab("Sales") +
+  ggtitle("Market Sales Over Time") +
+  scale_color_manual(name="Markets", values=marketshare_graphing_cols) +
+  theme_clean()
+
+
+```
